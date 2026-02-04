@@ -32,7 +32,7 @@ response = client.chat.completions.create(
                 {
                     "sentiment_analysis": {
                     "sentiment": "positive|negative|neutral",
-                    "confidence_score": 5.95/10,
+                    "confidence_score": 8,2 ,
                     "key_phrases": [
                         {
                         "phrase": "detected key phrase",
