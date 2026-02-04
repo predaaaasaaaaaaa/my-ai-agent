@@ -56,3 +56,27 @@ completion = client.chat.completions.create(
 
 
 # Step 2: Model decides to call function(s)
+
+completion.model_dump()
+
+
+# Step 3: Execute 'search_kb' function
+
+
+def call_function(name, args):
+    if name == "search_kb":
+        return search_kb(**args)
+
+
+for tool_call in completion.choices[0].message.tool_calls:
+    name = tool_call.function.name
+    args = json.loads(tool_call.function.arguments)
+    messages.append(completion.choices[0].message)
+
+    result = call_function(name, args)
+    messages.append(
+        {"role": "tool", "tool_call_id": tool_call.id, "content": json.dumps(result)}
+    )
+
+
+# Step 4: Supply result and call model again
