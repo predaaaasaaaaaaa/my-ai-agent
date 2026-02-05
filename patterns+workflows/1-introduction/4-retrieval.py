@@ -2,7 +2,6 @@ import json
 import os
 
 from groq import Groq
-from pydantic import BaseModel, Field
 
 client = Groq(api_key=os.getenv("GROQ_QPI_KEY"))
 
@@ -18,7 +17,7 @@ def search_kd(question: str):
     Load the whole knowledge base from the JSON file
     (This is a mock function for demonstastion purposes)
     """
-    with open("kb.json", "r") as f:
+    with open("kd.json", "r") as f:
         return json.load(f)
 
 
@@ -41,7 +40,7 @@ tools = [
     }
 ]
 
-system_prompt = "You are a helpful assistant that answers questions from the knowledge base about our e-commerce store."
+system_prompt = "You are a helpful assistant that answers questions from the knowledge base about our e-commerce store. (if the user asks something else that doesn't match your role just respond a cool response and tell the user that you cannot responde and that's it! no suggestion no allucination)."
 
 messages = [
     {"role": "system", "content": system_prompt},
@@ -64,7 +63,7 @@ completion.model_dump()
 
 
 def call_function(name, args):
-    if name == "search_kb":
+    if name == "search_kd":
         return search_kd(**args)
 
 
@@ -82,24 +81,17 @@ for tool_call in completion.choices[0].message.tool_calls:
 # Step 4: Supply result and call model again
 
 
-class KBResponse(BaseModel):
-    answer: str = Field(description="The answer to the user's question.")
-    source: int = Field(description="The record id of the answer.")
-
-
 completion_2 = client.chat.completions.create(
     model="llama-3.3-70b-versatile",
     messages=messages,
     tools=tools,
-    response_format=KBResponse,
 )
 
 
 # Step 5: Ckeck model response
 
-final_response = completion_2.choices[0].message.parsed
-final_response.answer
-final_response.source
+final_response = completion_2.choices[0].message.content
+print("Answer:", final_response)
 
 
 # Question that doesn't trigger the Tool
@@ -109,7 +101,7 @@ messages = [
     {"role": "user", "content": "How to make a Pizza?"},
 ]
 
-completion_3 = client.beta.chat.copletion.parse(
+completion_3 = client.chat.completions.create(
     model="llama-3.3-70b-versatile",
     messages=messages,
     tools=tools,
