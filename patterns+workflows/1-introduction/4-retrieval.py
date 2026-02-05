@@ -13,7 +13,7 @@ docs: https://console.groq.com/docs/tool-use/overview#3-local-tool-calling-funct
 # Defining the knowledge base retrieval tool
 
 
-def search_kb(queston: str):
+def search_kd(question: str):
     """
     Load the whole knowledge base from the JSON file
     (This is a mock function for demonstastion purposes)
@@ -28,7 +28,7 @@ tools = [
     {
         "type": "function",
         "function": {
-            "name": "search_kb",
+            "name": "search_kd",
             "description": "Get the answer to the user's question from the knowledge base",
             "parameters": {
                 "type": "object",
@@ -65,7 +65,7 @@ completion.model_dump()
 
 def call_function(name, args):
     if name == "search_kb":
-        return search_kb(**args)
+        return search_kd(**args)
 
 
 for tool_call in completion.choices[0].message.tool_calls:
@@ -80,3 +80,39 @@ for tool_call in completion.choices[0].message.tool_calls:
 
 
 # Step 4: Supply result and call model again
+
+
+class KBResponse(BaseModel):
+    answer: str = Field(description="The answer to the user's question.")
+    source: int = Field(description="The record id of the answer.")
+
+
+completion_2 = client.chat.completions.create(
+    model="llama-3.3-70b-versatile",
+    messages=messages,
+    tools=tools,
+    response_format=KBResponse,
+)
+
+
+# Step 5: Ckeck model response
+
+final_response = completion_2.choices[0].message.parsed
+final_response.answer
+final_response.source
+
+
+# Question that doesn't trigger the Tool
+
+messages = [
+    {"role": "system", "content": system_prompt},
+    {"role": "user", "content": "How to make a Pizza?"},
+]
+
+completion_3 = client.beta.chat.copletion.parse(
+    model="llama-3.3-70b-versatile",
+    messages=messages,
+    tools=tools,
+)
+
+completion_3.choices[0].message.content
